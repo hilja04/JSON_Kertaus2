@@ -72,7 +72,7 @@
 
 <body>
 
-     <div class="topnav" id="myTopnav">
+    <div class="topnav" id="myTopnav">
         <a href="tapahtumat.html" class="active">Tapahtumat</a>
         <a href="saa.html">Sää</a>
         <a href="liikennekamera.html">Liikennekamera</a>
@@ -87,38 +87,78 @@
     </div>
 
     <script>
-        fetch('https://api.visittampere.com/api/v1/visittampere/event/published/all/?format = json & lang=fi')
-            // Muunnetaan vastaus JSON muotoon
+        fetch('https://rata.digitraffic.fi/api/v1/live-trains/station/HKI?departing_trains=100&include_nonstopping=false')
+    
             .then(function (response) {
                 return response.json();
             })
-            // Käsitellään muunnettu (eli JSON muotoinen) vastaus
+          
             .then(function (responseJson) {
 
-                // Kutsutaan funktiota ja välitetään sille json-vastaus
-                tapahtumat(responseJson)
+                junat(responseJson)
 
             })
-            // Jos tuli jokin virhe
+            
             .catch(function (error) {
                 document.getElementById("vastaus").innerHTML =
                     "<p>Tietoa ei pystytä hakemaan </p>" + error;
             })
 
-        function tapahtumat(data){
-            
-            // tulosta teksti-muuttujan sisältö web-sivulle
-         }
+        function junat(data) {
+            var teksti = "<h1>Mennäänkö junalla Tampereelle?</h1>";
+            teksti += "<p>Kuinkakohan usein junat menee?</p>";
+
+
+            for (var i = 0; i < data.length; i++) {
+                //Alusta muuttujat
+                var lahtoAika = "";
+                var saapumisAika = "";
+                var junaNro = "";
+                var junaTyyppi = "";
+
+                for (var j = 0; j < data[i].timeTableRows.length; j++) {
+                    //Katotaan kaikki helsingisä lähtevät junat
+                    if (data[i].timeTableRows[j].stationShortCode == "HKI" &&
+                        data[i].timeTableRows[j].type == "DEPARTURE" &&
+                        data[i].trainCategory == "Long-distance") {
+
+                        junaNro = data[i].trainNumber;
+                        junaTyyppi = data[i].trainType;
+                        var pvm = data[i].timeTableRows[j].scheduledTime;
+                        lahtoAika = pvm.substr(0, 10) + " kello: " + pvm.substr(11, 5);
+                    }
+                    //Sitten jos pysähyyy tampereella
+                    if (data[i].timeTableRows[j].stationShortCode == "TPE" &&
+                        data[i].timeTableRows[j].type == "ARRIVAL" &&
+                        data[i].trainCategory == "Long-distance") {
+
+                        var pvm2 = data[i].timeTableRows[j].scheduledTime;
+                        saapumisAika = pvm2.substr(0, 10) + " kello: " + pvm2.substr(11, 5);
+                    }
+                }
+                //Jos molemmat löyty
+                if (lahtoAika && saapumisAika) {
+                    teksti += "<ul>";
+                    teksti += "<li><h3>Juna nro " + junaNro + "</h3></li>";
+                    teksti += "<li><p>Junan tyyppi: " + junaTyyppi + "</p></li>";
+                    teksti += "<li><p>Lähtee Helsingistä " + lahtoAika + "</p></li>";
+                    teksti += "<li><p>Saapuu Tampereelle " + saapumisAika + "</p></li>";
+                    teksti += "</ul>";
+                }
+            }
+
+            document.getElementById("vastaus").innerHTML = teksti;
+        }
 
         //navipalkin käyttöliittymä
         function myFunction() {
-                var x = document.getElementById("myTopnav");
-                if (x.className === "topnav") {
-                    x.className += " responsive";
-                } else {
-                    x.className = "topnav";
-                }
+            var x = document.getElementById("myTopnav");
+            if (x.className === "topnav") {
+                x.className += " responsive";
+            } else {
+                x.className = "topnav";
             }
+        }
     </script>
 
 </body>
